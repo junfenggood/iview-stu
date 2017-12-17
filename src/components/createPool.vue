@@ -88,7 +88,6 @@ export default {
             for( let item of this.items ){
                 if(this.$refs[item.tiername]){
                     let tierinfo = this.$refs[item.tiername][0].tierInfo;
-                    console.log(tierinfo);
                     tiers.push({
                         tierType: item.tiername,
                         diskCount: tierinfo.diskCount,
