@@ -1,211 +1,137 @@
 <style scoped>
-.headcust{
-    text-align: center;
-    padding: 20px;
-    background-color: #f8f8f9;
-}
+    @import 'styles/common.css';
 </style>
 <template>
-    <div id="blocktest">
-        <div class="headcust">
-            <h2>File Test</h2>
+    <div class="layout">
+        <Menu mode="horizontal" theme="dark" active-name="1">
+            <div class="layout-logo"></div>
+            <div class="layout-nav">
+                <MenuItem name="1">
+                    <Icon type="ios-navigate"></Icon>
+                    Item 1
+                </MenuItem>
+                <MenuItem name="2">
+                    <Icon type="ios-keypad"></Icon>
+                    Item 2
+                </MenuItem>
+                <MenuItem name="3">
+                    <Icon type="ios-analytics"></Icon>
+                    Item 3
+                </MenuItem>
+                <MenuItem name="4">
+                    <Icon type="ios-paper"></Icon>
+                    Item 4
+                </MenuItem>
+            </div>
+        </Menu>
+        <Menu mode="horizontal" active-name="1" @on-select="changeview">
+            <div class="layout-assistant">
+                <MenuItem name="block">Block Test</MenuItem>
+                <MenuItem name="file">File Test</MenuItem>
+                <MenuItem name="total">Summary</MenuItem>
+            </div>
+        </Menu>
+        <div class="layout-content">
+            <Row>
+                <Col span="5">
+                    <Menu active-name="1-2" width="auto" :open-names="['1']">
+                        <Submenu name="1">
+                            <template slot="title">
+                                <Icon type="ios-keypad"></Icon>
+                                Pool
+                            </template>
+                            <MenuItem v-for="(pool,key) in project.pools" :name="'1-' + key" :key="key">{{ pool.name }}</MenuItem>
+                        </Submenu>
+                        <Submenu name="2">
+                            <template slot="title">
+                                <Icon type="ios-keypad"></Icon>
+                                NAS Server
+                            </template>
+                            <MenuItem v-for="(nas, key) in project.nases" :name="'3-'+ key" :key="key">{{ nas.name }}</MenuItem>
+                        </Submenu>
+                        <Submenu name="3">
+                            <template slot="title">
+                                <Icon type="ios-keypad"></Icon>
+                                Lun
+                            </template>
+                            <MenuItem v-for="(lun, key) in project.luns" :name="'3-'+ key" :key="key">{{ lun.name }}</MenuItem>
+                        </Submenu>
+                        <Submenu name="4">
+                            <template slot="title">
+                                <Icon type="ios-keypad"></Icon>
+                                Filesystem
+                            </template>
+                            <MenuItem v-for="(fs, key) in project.filesystems" :name="'3-'+ key" :key="key">{{ fs.name }}</MenuItem>
+                        </Submenu>
+
+                    </Menu>
+                </Col>
+                <Col span="19">
+                    <component :is="currentView" :project="project"></component>
+                </Col>
+            </Row>
         </div>
-        
-        <Form :model="fileInfo" :label-width="150">
-            <FormItem label="Filesystem Prefix name">
-                <Row>
-                    <Col span="20">
-                        <Input v-model="fileInfo.name" placeholder="Enter something..."></Input>
-                    </Col>
-                </Row>
-            </FormItem>
-
-            <FormItem label="Select Pool">
-                <Row>
-                    <Col span="20">
-                        <Select v-model="fileInfo.pool_name" placeholder="Please select pool">
-                            <Option v-for="(pool, key) in project.pools" :value="pool.name" :key="key" >{{ pool.name }}</Option>
-                        </Select>
-                    </Col>
-                    <Col span="4">
-                        <a href="#" @click="modal_pool = true">
-                            <Icon type="plus-circled" size="30"></Icon>
-                        </a>
-                    </Col>
-                </Row>
-            </FormItem>
-
-            <FormItem label="Select NAS">
-                <Row>
-                    <Col span="20">
-                        <Select v-model="fileInfo.nas_name" placeholder="Please select NAS">
-                            <Option v-for="(nas, key) in project.nases" :value="nas.name" :key="key" >{{ nas.name }}</Option>
-                        </Select>
-                    </Col>
-                    <Col span="4">
-                        <a href="#" @click="modal_nas = true">
-                            <Icon type="plus-circled" size="30"></Icon>
-                        </a>
-                    </Col>
-                </Row>
-            </FormItem>
-            
-            
-            <FormItem label="Filesystem number" >
-                <Row>
-                    <Col span="20">
-                        <Slider v-model="fileInfo.number" show-input :max="500"></Slider>
-                    </Col>
-                </Row>
-            </FormItem>
-            <FormItem label="Filesystem Size">
-                <Row>
-                    <Col span="20">
-                        <Slider v-model="fileInfo.size" show-input :max="unit_limit" ></Slider>
-                    </Col>
-                    <Col span="4">
-                        <Select v-model="fileInfo.unit" style="width: 55px; margin-left: 8px" @on-change="changeMax">
-                            <Option value="GB">GB</Option>
-                            <Option value="TB">TB</Option>
-                        </Select>
-                    </Col>
-                </Row>
-            </FormItem>
-            <FormItem label="Enable ILC">
-                <Switch v-model="fileInfo.ilc" size="large" @on-change="switchIlc">
-                    <span slot="open">On</span>
-                    <span slot="close">Off</span>
-                </Switch>
-            </FormItem>
-            <FormItem label="Thin Percentage">
-                <Row>
-                    <Col span="20">
-                        <Slider v-model="fileInfo.thin_percentage" :max="100" show-input :disabled="ilcDisabled"></Slider>
-                    </Col>
-                    <Col span="4">
-                        <span style="font-size:20px">%</span>
-                    </Col>
-                </Row>
-            </FormItem>
-            <FormItem label="Select IO type">
-                <Row>
-                    <Col span="20">
-                        <RadioGroup v-model="fileInfo.io_type">
-                            <Radio label="ilpd">
-                                <span>ILPD</span>
-                            </Radio>
-                            <Radio label="workload">
-                                <span>WorkLoad</span>
-                            </Radio>
-                        </RadioGroup>
-                    </Col>
-                </Row>
-            </FormItem>
-            <FormItem>
-                <Row>
-                    <Col span="12">
-                        <Button type="ghost" style="margin-left: 8px">Cancel</Button>
-                    </Col>
-                    <Col span="12">
-                        <Button type="primary" @click="saveFileInfo">Submit</Button>
-                    </Col>
-                </Row>
-            </FormItem>
-        </Form>
-        <Modal v-model="modal_pool"
-               title="Create Pool"
-               @on-ok="pool_ok"
-               @on-cancel="pool_cancel"
-               ok-text="Create"
-               cancel-text="Cancel">
-               <createpoolcomponent ref="createpool"></createpoolcomponent>
-        </Modal>
-        <Modal v-model="modal_nas"
-               title="Create NAS Server"
-               @on-ok="nas_ok"
-               @on-cancel="nas_cancel"
-               ok-text="Create"
-               cancel-text="Cancel">
-               <createnascomponent ref="createnas" :project="project"></createnascomponent>
-        </Modal>
+        <div class="layout-copy">
+            2011-2016 &copy; TalkingData
+        </div>
     </div>
 </template>
 <script>
-import poolcomponent from './createPool.vue';
-import nascomponent from './createNas.vue'
+import luncomponent from './components/blockTest.vue';
+import filecomponent from './components/fileTest.vue';
+import summarycomponent from './components/summary.vue';
 export default {
-    props: ['project'],
-    data(){
-        return { 
-            modal_pool: false,
-            modal_nas: false,
-            fileInfo: {
-                name: 'fs',
-                fs_number: 0,
-                pool_name: '',
-                io_type: 'ilpd',
-                ilc: false,
-                size: 0,
-                unit:'GB',
-                thin_percentage: 0,
-                nas_name: ''
-                },
-            unit_limit:1024,
-            ilcDisabled: true
-            }
-            
-    },
-    methods: {
-        pool_ok: function(){
-                var pool = this.$refs.createpool.handleSubmit();
-                this.$bus.emit('addpool', pool);
-        },
-        pool_cancel: function(){
-                this.$Message.info("YOU click cancel")
-        },
-        nas_ok: function(){
-                var nas = this.$refs.createnas.handleSubmit();
-                this.$bus.emit('addnas', nas);
-        },
-        nas_cancel: function(){
-                this.$Message.info("YOU click cancel")
-        },
-        saveFileInfo: function(){
-            var fs = { 
-                    name: this.fileInfo.name,
-                    pool_name: this.fileInfo.pool_name,
-                    nas_name: this.fileInfo.nas_name,
-                    fs_number: this.fileInfo.fs_number,
-                    io_type: this.fileInfo.io_type,
-                    size: this.fileInfo.size + this.fileInfo.unit,
-                    ilc: this.fileInfo.ilc,
-                    thin_percentage: this.fileInfo.ilc ? this.fileInfo.thin_percentage : 0
-                };
-                
-            this.$bus.emit('addfilesystem', fs);
-        },
-        changeMax: function () {
-            if(this.fileInfo.unit === 'GB'){
-                this.unit_limit = 1024
-            }else if(this.fileInfo.unit === 'TB'){
-                this.unit_limit = 256
-                if(this.fileInfo.size > 256){
-                    this.fileInfo.size = 256
-                }
-            }
-        },
-        switchIlc: function () {
-            if(this.fileInfo.ilc){
-                this.ilcDisabled = false
-            }else{
-                this.ilcDisabled = true
-            }
+    data () {
+        return {
+            project: {
+                pools:[],
+                nases: [],
+                luns:[],
+                filesystems: []
+            },
+            currentView:'block'   
         }
     },
+    created: function(){
+        this.$bus.on('addpool', this.addPool);
+        this.$bus.on('addlun', this.addLun);
+        this.$bus.on('addnas', this.addNas);
+        this.$bus.on('addfilesystem', this.addFilesystem)
+    },
+    beforeDestroy: function(){
+        this.$bus.off('addpool', this.addPool);
+        this.$bus.off('addlun', this.addLun);
+        this.$bus.off('addnas', this.addNas);
+        this.$bus.off('addfilesystem', this.addFilesystem)
+    },
     components: {
-            createpoolcomponent: poolcomponent,
-            createnascomponent: nascomponent
+        'block': luncomponent,
+        'file': filecomponent,
+        'total': summarycomponent
+    },
+    methods:{
+        addPool: function(pool){
+            this.project.pools.push(pool);
+            
+            console.log(JSON.stringify(this.project.pools));
+        },
+        addLun: function(lun){
+            this.project.luns.push(lun);
+            console.log(JSON.stringify(this.project.luns));
+        },
+        addNas: function(nas){
+            this.project.nases.push(nas);
+            
+            console.log(JSON.stringify(this.project.nases));
+        },
+        addFilesystem: function(fs){
+            this.project.filesystems.push(fs);
+            console.log(JSON.stringify(this.project.filesystems));
+        },
+        changeview: function(e){
+            console.log(e);
+            this.currentView = e;
+        }
     }
 }
 </script>
-
