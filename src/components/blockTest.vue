@@ -8,63 +8,70 @@
 <template>
     <div id="blocktest">
         <div class="headcust">
-            <h2>File Test</h2>
+            <h2>Block Test</h2>
         </div>
         
-        <Form :model="fileInfo" :label-width="150">
-            <FormItem label="Filesystem Prefix name">
+        <Form :model="lunInfo" :label-width="150">
+            <FormItem label="Select Lun type">
                 <Row>
                     <Col span="20">
-                        <Input v-model="fileInfo.name" placeholder="Enter something..."></Input>
+                        <Select v-model="lunInfo.type">
+                            <Option value="standalone">Standalone</Option>
+                            <Option value="group">Group</Option>
+                        </Select>
                     </Col>
                 </Row>
             </FormItem>
-
             <FormItem label="Select Pool">
                 <Row>
                     <Col span="20">
-                        <Select v-model="fileInfo.pool_name" placeholder="Please select pool">
+                        <Select v-model="lunInfo.pool_name" placeholder="Please select pool">
                             <Option v-for="(pool, key) in project.pools" :value="pool.name" :key="key" >{{ pool.name }}</Option>
                         </Select>
                     </Col>
                     <Col span="4">
-                        <a href="#" @click="modal_pool = true">
-                            <Icon type="plus-circled" size="30"></Icon>
-                        </a>
-                    </Col>
-                </Row>
-            </FormItem>
-
-            <FormItem label="Select NAS">
-                <Row>
-                    <Col span="20">
-                        <Select v-model="fileInfo.nas_name" placeholder="Please select NAS">
-                            <Option v-for="(nas, key) in project.nases" :value="nas.name" :key="key" >{{ nas.name }}</Option>
-                        </Select>
-                    </Col>
-                    <Col span="4">
-                        <a href="#" @click="modal_nas = true">
+                        <a href="#" @click="modal1 = true">
                             <Icon type="plus-circled" size="30"></Icon>
                         </a>
                     </Col>
                 </Row>
             </FormItem>
             
-            
-            <FormItem label="Filesystem number" >
+            <FormItem label="Lun Prefix name">
                 <Row>
                     <Col span="20">
-                        <Slider v-model="fileInfo.number" show-input :max="500"></Slider>
+                        <Input v-model="lunInfo.name" placeholder="Enter something..."></Input>
                     </Col>
                 </Row>
             </FormItem>
-            <FormItem label="Filesystem Size">
+            <FormItem label="Lun number" v-show="!display">
                 <Row>
                     <Col span="20">
-                        <Slider v-model="fileInfo.size" show-input :max="unit_limit" ></Slider>
+                        <Slider v-model="lunInfo.lun_number" show-input :max="500"></Slider>
+                    </Col>
+                </Row>
+            </FormItem>
+            <FormItem label="Group number" v-show="display">
+                <Row>
+                    <Col span="20">
+                        <Slider v-model="lunInfo.lg_number" show-input :max="80" ></Slider>
+                    </Col>
+                </Row>
+            </FormItem>
+            <FormItem label="Lun number Per Group" v-show="display">
+                <Row>
+                    <Col span="20">
+                        <Slider v-model="lunInfo.per_lg_number" :max="75" show-input ></Slider>
+                    </Col>
+                </Row>
+            </FormItem>
+            <FormItem label="Lun Size">
+                <Row>
+                    <Col span="20">
+                        <Slider v-model="lunInfo.size" show-input :max="unit_limit" ></Slider>
                     </Col>
                     <Col span="4">
-                        <Select v-model="fileInfo.unit" style="width: 55px; margin-left: 8px" @on-change="changeMax">
+                        <Select v-model="lunInfo.unit" style="width: 55px; margin-left: 8px" @on-change="changeMax">
                             <Option value="GB">GB</Option>
                             <Option value="TB">TB</Option>
                         </Select>
@@ -72,7 +79,7 @@
                 </Row>
             </FormItem>
             <FormItem label="Enable ILC">
-                <Switch v-model="fileInfo.ilc" size="large" @on-change="switchIlc">
+                <Switch v-model="lunInfo.ilc" size="large" @on-change="switchIlc">
                     <span slot="open">On</span>
                     <span slot="close">Off</span>
                 </Switch>
@@ -80,7 +87,7 @@
             <FormItem label="Thin Percentage">
                 <Row>
                     <Col span="20">
-                        <Slider v-model="fileInfo.thin_percentage" :max="100" show-input :disabled="ilcDisabled"></Slider>
+                        <Slider v-model="lunInfo.thin_percentage" :max="100" show-input :disabled="ilcDisabled"></Slider>
                     </Col>
                     <Col span="4">
                         <span style="font-size:20px">%</span>
@@ -90,7 +97,7 @@
             <FormItem label="Select IO type">
                 <Row>
                     <Col span="20">
-                        <RadioGroup v-model="fileInfo.io_type">
+                        <RadioGroup v-model="lunInfo.io_type">
                             <Radio label="ilpd">
                                 <span>ILPD</span>
                             </Radio>
@@ -107,95 +114,90 @@
                         <Button type="ghost" style="margin-left: 8px">Cancel</Button>
                     </Col>
                     <Col span="12">
-                        <Button type="primary" @click="saveFileInfo">Submit</Button>
+                        <Button type="primary" @click="saveLun">Submit</Button>
                     </Col>
                 </Row>
             </FormItem>
         </Form>
-        <Modal v-model="modal_pool"
+        <Modal v-model="modal1"
                title="Create Pool"
-               @on-ok="pool_ok"
-               @on-cancel="pool_cancel"
+               @on-ok="ok"
+               @on-cancel="cancel"
                ok-text="Create"
                cancel-text="Cancel">
                <createpoolcomponent ref="createpool"></createpoolcomponent>
-        </Modal>
-        <Modal v-model="modal_nas"
-               title="Create NAS Server"
-               @on-ok="nas_ok"
-               @on-cancel="nas_cancel"
-               ok-text="Create"
-               cancel-text="Cancel">
-               <createnascomponent ref="createnas" :project="project"></createnascomponent>
         </Modal>
     </div>
 </template>
 <script>
 import poolcomponent from './createPool.vue';
-import nascomponent from './createNas.vue'
 export default {
     props: ['project'],
     data(){
         return { 
-            modal_pool: false,
-            modal_nas: false,
-            fileInfo: {
-                name: 'fs',
-                fs_number: 0,
+            modal1: false,
+            lunInfo: {
+                type: 'standalone',
+                name: 'Lun',
+                lun_number: 0,
+                lg_number: 0,
+                per_lg_number: 0,
                 pool_name: '',
                 io_type: 'ilpd',
                 ilc: false,
                 size: 0,
                 unit:'GB',
-                thin_percentage: 0,
-                nas_name: ''
+                thin_percentage: 0
                 },
             unit_limit:1024,
             ilcDisabled: true
             }
             
     },
+    computed: {
+        display: function(){
+            return this.lunInfo.type === "group"
+        }
+    },
     methods: {
-        pool_ok: function(){
+        ok: function(){
                 var pool = this.$refs.createpool.handleSubmit();
                 this.$bus.emit('addpool', pool);
         },
-        pool_cancel: function(){
+        cancel: function(){
                 this.$Message.info("YOU click cancel")
         },
-        nas_ok: function(){
-                var nas = this.$refs.createnas.handleSubmit();
-                this.$bus.emit('addnas', nas);
-        },
-        nas_cancel: function(){
-                this.$Message.info("YOU click cancel")
-        },
-        saveFileInfo: function(){
-            var fs = { 
-                    name: this.fileInfo.name,
-                    pool_name: this.fileInfo.pool_name,
-                    nas_name: this.fileInfo.nas_name,
-                    fs_number: this.fileInfo.fs_number,
-                    io_type: this.fileInfo.io_type,
-                    size: this.fileInfo.size + this.fileInfo.unit,
-                    ilc: this.fileInfo.ilc,
-                    thin_percentage: this.fileInfo.ilc ? this.fileInfo.thin_percentage : 0
+        saveLun: function(){
+            var lun = { 
+                    name: this.lunInfo.name,
+                    type: this.lunInfo.type,
+                    pool_name: this.lunInfo.pool_name,
+                    io_type: this.lunInfo.io_type,
+                    size: this.lunInfo.size + this.lunInfo.unit,
+                    ilc: this.lunInfo.ilc,
+                    thin_percentage: this.lunInfo.ilc ? this.lunInfo.thin_percentage : 0
                 };
+            if(this.lunInfo.type === 'group'){
+                lun.lg_number = this.lunInfo.lg_number;
+                lun.per_lg_number = this.lunInfo.per_lg_number
+            }else{
+                lun.lun_number = this.lunInfo.lun_number;
+            }
                 
-            this.$bus.emit('addfilesystem', fs);
+            this.$bus.emit('addlun', lun);
         },
         changeMax: function () {
-            if(this.fileInfo.unit === 'GB'){
+            if(this.lunInfo.unit === 'GB'){
                 this.unit_limit = 1024
-            }else if(this.fileInfo.unit === 'TB'){
+            }else if(this.lunInfo.unit === 'TB'){
                 this.unit_limit = 256
-                if(this.fileInfo.size > 256){
-                    this.fileInfo.size = 256
+                if(this.lunInfo.size > 256){
+                    this.lunInfo.size = 256
                 }
             }
         },
         switchIlc: function () {
-            if(this.fileInfo.ilc){
+            if(this.lunInfo.ilc){
                 this.ilcDisabled = false
             }else{
                 this.ilcDisabled = true
@@ -203,8 +205,7 @@ export default {
         }
     },
     components: {
-            createpoolcomponent: poolcomponent,
-            createnascomponent: nascomponent
+            createpoolcomponent: poolcomponent
     }
 }
 </script>
