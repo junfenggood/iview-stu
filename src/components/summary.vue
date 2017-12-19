@@ -9,7 +9,7 @@
 <template>
 <div>
     <div class="tableset">
-        <Table stripe :columns="columns1" :data="data1"></Table>
+        <Table stripe :columns="columns1" :data="data1" size="large"></Table>
     </div>
     <div class="forbutton">
         <Button type="primary" shape="circle" icon="paper-airplane">Submit</Button>

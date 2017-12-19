@@ -158,14 +158,22 @@ export default {
     methods: {
         pool_ok: function(){
                 var pool = this.$refs.createpool.handleSubmit();
-                this.$bus.emit('addpool', pool);
+                var ob = {
+                    type: 'pools',
+                    info: pool
+                }
+                this.$bus.emit('add', ob);
         },
         pool_cancel: function(){
                 this.$Message.info("YOU click cancel")
         },
         nas_ok: function(){
                 var nas = this.$refs.createnas.handleSubmit();
-                this.$bus.emit('addnas', nas);
+                var ob = {
+                    type: 'nases',
+                    info: nas
+                }
+                this.$bus.emit('add', ob);
         },
         nas_cancel: function(){
                 this.$Message.info("YOU click cancel")
@@ -181,8 +189,11 @@ export default {
                     ilc: this.fileInfo.ilc,
                     thin_percentage: this.fileInfo.ilc ? this.fileInfo.thin_percentage : 0
                 };
-                
-            this.$bus.emit('addfilesystem', fs);
+            var ob = {
+                    type: 'filesystems',
+                    info: pool
+            }
+            this.$bus.emit('add', ob);
         },
         changeMax: function () {
             if(this.fileInfo.unit === 'GB'){

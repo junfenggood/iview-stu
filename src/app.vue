@@ -8,7 +8,7 @@
             <div class="layout-nav">
                 <MenuItem name="1">
                     <Icon type="ios-navigate"></Icon>
-                    Item 1
+                    Item1
                 </MenuItem>
                 <MenuItem name="2">
                     <Icon type="ios-keypad"></Icon>
@@ -24,7 +24,7 @@
                 </MenuItem>
             </div>
         </Menu>
-        <Menu mode="horizontal" active-name="1" @on-select="changeview">
+        <Menu mode="horizontal" active-name="block" @on-select="changeview">
             <div class="layout-assistant">
                 <MenuItem name="block">Block Test</MenuItem>
                 <MenuItem name="file">File Test</MenuItem>
@@ -34,103 +34,110 @@
         <div class="layout-content">
             <Row>
                 <Col span="5">
-                    <Menu active-name="1-2" width="auto" :open-names="['1']">
-                        <Submenu name="1">
+                    <Menu active-name="pool" width="auto" :open-names="['pool']" @on-select="changeItem">
+                        <Submenu name="pool">
                             <template slot="title">
                                 <Icon type="ios-keypad"></Icon>
                                 Pool
                             </template>
-                            <MenuItem v-for="(pool,key) in project.pools" :name="'1-' + key" :key="key">{{ pool.name }}</MenuItem>
+                            <MenuItem v-for="(pool,key) in project.pools" :name="'pool-' + key" :key="key">{{ pool.name }}</MenuItem>
                         </Submenu>
-                        <Submenu name="2">
+                        <Submenu name="nas">
                             <template slot="title">
                                 <Icon type="ios-keypad"></Icon>
                                 NAS Server
                             </template>
-                            <MenuItem v-for="(nas, key) in project.nases" :name="'3-'+ key" :key="key">{{ nas.name }}</MenuItem>
+                            <MenuItem v-for="(nas,key) in project.nases" :name="'nas-' + key" :key="key">{{ nas.name }}</MenuItem>
                         </Submenu>
-                        <Submenu name="3">
+                        <Submenu name="lun">
                             <template slot="title">
                                 <Icon type="ios-keypad"></Icon>
                                 Lun
                             </template>
-                            <MenuItem v-for="(lun, key) in project.luns" :name="'3-'+ key" :key="key">{{ lun.name }}</MenuItem>
+                            <MenuItem v-for="(lun, key) in project.luns" :name="'lun-'+ key" :key="key">{{ lun.name }}</MenuItem>
                         </Submenu>
-                        <Submenu name="4">
+                        <Submenu name="fs">
                             <template slot="title">
                                 <Icon type="ios-keypad"></Icon>
                                 Filesystem
                             </template>
-                            <MenuItem v-for="(fs, key) in project.filesystems" :name="'3-'+ key" :key="key">{{ fs.name }}</MenuItem>
+                            <MenuItem v-for="(fs, key) in project.filesystems" :name="'fs-'+ key" :key="key">{{ fs.name }}</MenuItem>
                         </Submenu>
-
                     </Menu>
                 </Col>
                 <Col span="19">
-                    <component :is="currentView" :project="project"></component>
+                    <div class="layout-content-main">
+                       <component :is="currentView" :project="project" :index="index"></component> 
+                    </div>
                 </Col>
             </Row>
         </div>
         <div class="layout-copy">
-            2011-2016 &copy; TalkingData
+            2011-2016
         </div>
     </div>
 </template>
 <script>
-import luncomponent from './components/blockTest.vue';
+import blockcomponent from './components/blockTest.vue';
 import filecomponent from './components/fileTest.vue';
 import summarycomponent from './components/summary.vue';
+import editpoolcomponent from './components/editPool.vue';
+import editnascomponent from './components/editNas.vue'
 export default {
-    data () {
-        return {
+    data(){
+        return { 
             project: {
                 pools:[],
                 nases: [],
                 luns:[],
                 filesystems: []
             },
-            currentView:'block'   
+            currentView:'block',
+            index: 0,
+            ax_id: 10000
         }
     },
     created: function(){
-        this.$bus.on('addpool', this.addPool);
-        this.$bus.on('addlun', this.addLun);
-        this.$bus.on('addnas', this.addNas);
-        this.$bus.on('addfilesystem', this.addFilesystem)
+        this.$bus.on('add', this.add);
+        this.$bus.on('update', this.update);
+        this.$bus.on('delete', this.delete);
     },
     beforeDestroy: function(){
-        this.$bus.off('addpool', this.addPool);
-        this.$bus.off('addlun', this.addLun);
-        this.$bus.off('addnas', this.addNas);
-        this.$bus.off('addfilesystem', this.addFilesystem)
+        this.$bus.off('add', this.add);
+        this.$bus.off('update', this.update);
+        this.$bus.off('delete', this.delete);
     },
-    components: {
-        'block': luncomponent,
+    components:{
+        'block':blockcomponent,
         'file': filecomponent,
-        'total': summarycomponent
-    },
-    methods:{
-        addPool: function(pool){
-            this.project.pools.push(pool);
-            
-            console.log(JSON.stringify(this.project.pools));
+        'total': summarycomponent,
+        'pool': editpoolcomponent,
+        'nas': editnascomponent,
+        'lun':'',
+        'fs': '',
         },
-        addLun: function(lun){
-            this.project.luns.push(lun);
+    
+    methods:{
+        add: function(ob){
+            ob.info.ax_id = this.ax_id++;
+            this.project[ob.type].push(ob.info)
+            console.log(JSON.stringify(this.project[ob.type]));
+        },
+        update: function(ob, index){
+            this.project[ob.type].splice(index, 1, ob.info);
             console.log(JSON.stringify(this.project.luns));
         },
-        addNas: function(nas){
-            this.project.nases.push(nas);
-            
-            console.log(JSON.stringify(this.project.nases));
-        },
-        addFilesystem: function(fs){
-            this.project.filesystems.push(fs);
-            console.log(JSON.stringify(this.project.filesystems));
+        delete: function (type, index) {
+            this.project[type].splice(index, 1);
         },
         changeview: function(e){
-            console.log(e);
             this.currentView = e;
+        },
+        changeItem: function(e){
+            let sideItem = e.split('-');
+            this.index = Number(sideItem[1]);
+            this.currentView = sideItem[0];
+            
         }
     }
 }

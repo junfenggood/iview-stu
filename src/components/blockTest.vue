@@ -162,7 +162,11 @@ export default {
     methods: {
         ok: function(){
                 var pool = this.$refs.createpool.handleSubmit();
-                this.$bus.emit('addpool', pool);
+                var ob = {
+                    type: 'pools',
+                    info: pool
+                }
+                this.$bus.emit('add', ob);
         },
         cancel: function(){
                 this.$Message.info("YOU click cancel")
@@ -183,8 +187,12 @@ export default {
             }else{
                 lun.lun_number = this.lunInfo.lun_number;
             }
-                
-            this.$bus.emit('addlun', lun);
+
+            var ob = {
+                    type: 'luns',
+                    info: lun
+                }
+            this.$bus.emit('add', ob);
         },
         changeMax: function () {
             if(this.lunInfo.unit === 'GB'){
