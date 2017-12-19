@@ -34,7 +34,7 @@
         <div class="layout-content">
             <Row>
                 <Col span="5">
-                    <Menu active-name="pool" width="auto" :open-names="['pool']" @on-select="changeItem">
+                    <Menu active-name="pool" width="auto" :open-names="['pool']" @on-select="changeSubItem">
                         <Submenu name="pool">
                             <template slot="title">
                                 <Icon type="ios-keypad"></Icon>
@@ -82,7 +82,9 @@ import blockcomponent from './components/blockTest.vue';
 import filecomponent from './components/fileTest.vue';
 import summarycomponent from './components/summary.vue';
 import editpoolcomponent from './components/editPool.vue';
-import editnascomponent from './components/editNas.vue'
+import editnascomponent from './components/editNas.vue';
+import editluncomponent from './components/editLun.vue';
+import editfscomponent from './components/editFilesystem.vue';
 export default {
     data(){
         return { 
@@ -113,8 +115,8 @@ export default {
         'total': summarycomponent,
         'pool': editpoolcomponent,
         'nas': editnascomponent,
-        'lun':'',
-        'fs': '',
+        'lun':editluncomponent,
+        'fs': editfscomponent
         },
     
     methods:{
@@ -125,7 +127,8 @@ export default {
         },
         update: function(ob, index){
             this.project[ob.type].splice(index, 1, ob.info);
-            console.log(JSON.stringify(this.project.luns));
+            this.currentView = 'total';
+            console.log(JSON.stringify(this.project[ob.type]));
         },
         delete: function (type, index) {
             this.project[type].splice(index, 1);
@@ -133,7 +136,7 @@ export default {
         changeview: function(e){
             this.currentView = e;
         },
-        changeItem: function(e){
+        changeSubItem: function(e){
             let sideItem = e.split('-');
             this.index = Number(sideItem[1]);
             this.currentView = sideItem[0];

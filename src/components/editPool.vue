@@ -5,7 +5,9 @@
     .headcust{
         text-align: center;
         padding: 20px;
-        background-color: #f8f8f9;
+    }
+    .buttonDiv{
+        margin-top: 20px;
     }
 </style>
 
@@ -34,24 +36,30 @@
                     </Col>
                 </Row>
             </FormItem>
-            <ul>
-                <li :is="item.component" 
-                    v-for="(item,key) in items" 
-                    :tierdesc="item" 
-                    @controlCard="handleCard"
-                    :ref="item.tiername"
-                    :key="key">
-                </li>
-            </ul>
+            <Row>
+                <Col span="20" offset="1">
+                    <ul>
+                        <li :is="item.component" 
+                            v-for="(item,key) in items" 
+                            :tierdesc="item" 
+                            @controlCard="handleCard"
+                            :ref="item.tierType"
+                            :key="key">
+                        </li>
+                    </ul>
+                </Col>
+            </Row>
             <FormItem>
-                <Row>
-                    <Col span="12">
-                        <Button type="ghost" @click="deletePool">Delete</Button>
-                    </Col>
-                    <Col span="12">
-                        <Button type="primary" @click="savePool">Update</Button>
-                    </Col>
-                </Row>
+                <div class="buttonDiv">
+                    <Row>
+                        <Col span="12">
+                            <Button type="ghost" @click="deletePool">Delete</Button>
+                        </Col>
+                        <Col span="12">
+                            <Button type="primary" @click="savePool">Update</Button>
+                        </Col>
+                    </Row>
+                </div>
             </FormItem>
         </Form>
     </div>
@@ -100,7 +108,7 @@ export default {
       addTier: function () {
             var _this = this
             var tempItems = this.items.filter(function(item){
-                return _this.poolInfo.tier === item.tiername;
+                return _this.poolInfo.tier === item.tierType;
             });
             if(tempItems.length === 0){
                 this.items.push({
@@ -111,7 +119,7 @@ export default {
       },
       handleCard: function(name){
           this.items = this.items.filter(function(item){
-              return item.tiername !== name
+              return item.tierType!== name
           });
           
       },

@@ -8,7 +8,7 @@
 <template>
     <div id="blocktest">
         <div class="headcust">
-            <h2>File Test</h2>
+            <h2>Edit Filesystem {{ fileInfo.name }}</h2>
         </div>
         
         <Form :model="fileInfo" :label-width="150">
@@ -27,11 +27,6 @@
                             <Option v-for="(pool, key) in project.pools" :value="pool.name" :key="key" >{{ pool.name }}</Option>
                         </Select>
                     </Col>
-                    <Col span="4">
-                        <a href="#" @click="modal_pool = true">
-                            <Icon type="plus-circled" size="30"></Icon>
-                        </a>
-                    </Col>
                 </Row>
             </FormItem>
 
@@ -41,11 +36,6 @@
                         <Select v-model="fileInfo.nas_name" placeholder="Please select NAS">
                             <Option v-for="(nas, key) in project.nases" :value="nas.name" :key="key" >{{ nas.name }}</Option>
                         </Select>
-                    </Col>
-                    <Col span="4">
-                        <a href="#" @click="modal_nas = true">
-                            <Icon type="plus-circled" size="30"></Icon>
-                        </a>
                     </Col>
                 </Row>
             </FormItem>
@@ -104,41 +94,25 @@
             <FormItem>
                 <Row>
                     <Col span="12">
-                        <Button type="ghost" style="margin-left: 8px">Cancel</Button>
+                        <Button type="ghost" @click="deleteFilesystem">Delete</Button>
                     </Col>
                     <Col span="12">
-                        <Button type="primary" @click="saveFileInfo">Submit</Button>
+                        <Button type="primary" @click="updateFilesystem">Update</Button>
                     </Col>
                 </Row>
             </FormItem>
         </Form>
-        <Modal v-model="modal_pool"
-               title="Create Pool"
-               @on-ok="pool_ok"
-               @on-cancel="pool_cancel"
-               ok-text="Create"
-               cancel-text="Cancel">
-               <createpoolcomponent ref="createpool"></createpoolcomponent>
-        </Modal>
-        <Modal v-model="modal_nas"
-               title="Create NAS Server"
-               @on-ok="nas_ok"
-               @on-cancel="nas_cancel"
-               ok-text="Create"
-               cancel-text="Cancel">
-               <createnascomponent ref="createnas" :project="project"></createnascomponent>
-        </Modal>
     </div>
 </template>
 <script>
-import poolcomponent from './createPool.vue';
-import nascomponent from './createNas.vue'
+
 export default {
-    props: ['project'],
+    props: {
+        project: Object,
+        index: Number
+    },
     data(){
         return { 
-            modal_pool: false,
-            modal_nas: false,
             fileInfo: {
                 name: 'fs',
                 fs_number: 0,
@@ -155,31 +129,28 @@ export default {
             }
             
     },
+    mounted: function(){
+        let fs = this.project.filesystems[this.index];
+        this.fileInfo.name = fs.name;
+        this.fileInfo.pool_name = fs.pool_name;
+        this.fileInfo.fs_number = fs.fs_number;
+        this.fileInfo.nas_name = fs.nas_name;
+        let re = /(\d+)(GB|TB)/;
+        let sizeArray = re.exec(fs.size);
+        this.fileInfo.size = Number(sizeArray[1]);
+        this.fileInfo.unit = sizeArray[2];
+        if(fs.ilc){
+            this.ilcDisabled = false;
+        }
+        this.fileInfo.ilc = fs.ilc;
+        this.fileInfo.thin_percentage = fs.thin_percentage;
+        this.io_type = fs.io_type;
+    },
     methods: {
-        pool_ok: function(){
-                var pool = this.$refs.createpool.handleSubmit();
-                var ob = {
-                    type: 'pools',
-                    info: pool
-                }
-                this.$bus.emit('add', ob);
-        },
-        pool_cancel: function(){
-                this.$Message.info("YOU click cancel")
-        },
-        nas_ok: function(){
-                var nas = this.$refs.createnas.handleSubmit();
-                var ob = {
-                    type: 'nases',
-                    info: nas
-                }
-                this.$bus.emit('add', ob);
-        },
-        nas_cancel: function(){
-                this.$Message.info("YOU click cancel")
-        },
-        saveFileInfo: function(){
+        
+        updateFilesystem: function(){
             var fs = { 
+                    ax_id: this.project.filesystems[this.index].ax_id,
                     name: this.fileInfo.name,
                     pool_name: this.fileInfo.pool_name,
                     nas_name: this.fileInfo.nas_name,
@@ -193,7 +164,10 @@ export default {
                     type: 'filesystems',
                     info: fs
             }
-            this.$bus.emit('add', ob);
+            this.$bus.emit('update', ob);
+        },
+        deleteFilesystem: function(){
+            this.$bus.emit('delete', 'filesystems', this.index);
         },
         changeMax: function () {
             if(this.fileInfo.unit === 'GB'){
@@ -212,10 +186,6 @@ export default {
                 this.ilcDisabled = true
             }
         }
-    },
-    components: {
-            createpoolcomponent: poolcomponent,
-            createnascomponent: nascomponent
     }
 }
 </script>
